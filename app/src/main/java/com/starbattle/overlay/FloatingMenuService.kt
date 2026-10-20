@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.PointF
 import android.hardware.display.DisplayManager
@@ -31,17 +32,13 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import kotlin.math.hypot
 
 /**
- * Foreground Service managing the GameGuardian-style floating HUD and transparent target overlay.
- *
- * Architecture:
- * - View A (Menu/Bubble): TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE, smooth dragging via rawX/rawY.
- * - View B (Target Reticles): TYPE_APPLICATION_OVERLAY, FLAG_NOT_TOUCHABLE, FLAG_NOT_FOCUSABLE.
- * - Zero Idle CPU: VirtualDisplay & ImageReader are spawned on-demand for exactly ONE frame when
- *   "Solve" is pressed and destroyed immediately after.
+ * Crash-Proof Foreground Service managing the GameGuardian-style floating HUD
+ * and transparent target overlay for Star Battle / LinkedIn Queens.
  */
 class FloatingMenuService : Service() {
 
@@ -68,6 +65,8 @@ class FloatingMenuService : Service() {
     // Screen projection
     private var mediaProjectionManager: MediaProjectionManager? = null
     private var mediaProjection: MediaProjection? = null
+    private var projectionResultCode = 0
+    private var projectionResultData: Intent? = null
     private var captureHandlerThread: HandlerThread? = null
     private var captureHandler: Handler? = null
 
@@ -83,6 +82,7 @@ class FloatingMenuService : Service() {
     private var screenWidth = 1080
     private var screenHeight = 2400
     private var screenDensityDpi = 420
+    private var isSolving = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -160,17 +160,39 @@ class FloatingMenuService : Service() {
                 @Suppress("DEPRECATION")
                 it.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
             }
-            if (resultCode != 0 && resultData != null && mediaProjection == null) {
-                mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData)
+            if (resultCode != 0 && resultData != null) {
+                projectionResultCode = resultCode
+                projectionResultData = resultData
+                initOrRenewMediaProjection()
             }
         }
 
         return START_NOT_STICKY
     }
 
+    private fun initOrRenewMediaProjection(): MediaProjection? {
+        try {
+            if (projectionResultCode != 0 && projectionResultData != null) {
+                mediaProjection?.stop()
+                val proj = mediaProjectionManager?.getMediaProjection(projectionResultCode, projectionResultData!!)
+                // CRITICAL FOR ANDROID 14 (API 34): Must register callback before creating virtual display
+                proj?.registerCallback(object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        super.onStop()
+                        mediaProjection = null
+                    }
+                }, captureHandler)
+                mediaProjection = proj
+                return proj
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return mediaProjection
+    }
+
     /**
      * View B: Fullscreen transparent Canvas View.
-     * Must be TYPE_APPLICATION_OVERLAY, FLAG_NOT_TOUCHABLE, and FLAG_NOT_FOCUSABLE.
      */
     private fun setupViewBOverlay() {
         overlayCanvasView = OverlayCanvasView(this)
@@ -200,8 +222,6 @@ class FloatingMenuService : Service() {
 
     /**
      * View A: Floating Mod Menu / GameGuardian Bubble.
-     * Uses TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE.
-     * Implements smooth dragging via event.rawX and event.rawY.
      */
     private fun setupViewAMenu() {
         val inflater = LayoutInflater.from(this)
@@ -227,16 +247,13 @@ class FloatingMenuService : Service() {
             y = 350
         }
 
-        // Attach OnTouchListener to bubble for dragging and tapping
         setupDraggableTouchListener(bubbleView!!, isMenuRoot = false)
         bubbleView!!.findViewById<View>(R.id.bubble_container)?.setOnClickListener {
             expandMenu()
         }
 
-        // Setup expanded menu controls
         setupExpandedMenuControls()
 
-        // Initially attach the collapsed bubble
         activeMenuLayout = bubbleView
         windowManager.addView(activeMenuLayout, layoutParamsA)
     }
@@ -244,27 +261,24 @@ class FloatingMenuService : Service() {
     private fun setupExpandedMenuControls() {
         val menu = menuView ?: return
 
-        // Drag handle zone in the menu header
         val header = menu.findViewById<View>(R.id.menu_header)
         setupDraggableTouchListener(header, isMenuRoot = true)
 
-        // Minimize Button
         menu.findViewById<ImageButton>(R.id.btn_minimize)?.setOnClickListener {
             collapseMenu()
         }
 
-        // Solve Button
         menu.findViewById<Button>(R.id.btn_solve)?.setOnClickListener {
-            executeSolveAction()
+            if (!isSolving) {
+                executeSolveAction()
+            }
         }
 
-        // Clear Button
         menu.findViewById<Button>(R.id.btn_clear)?.setOnClickListener {
             overlayCanvasView?.clearTargets()
             updateMenuStatus("CLEARED", "#00FF88")
         }
 
-        // Close Button
         menu.findViewById<Button>(R.id.btn_close)?.setOnClickListener {
             stopSelf()
         }
@@ -274,24 +288,28 @@ class FloatingMenuService : Service() {
         if (isExpanded) return
         isExpanded = true
 
-        windowManager.removeView(activeMenuLayout)
-        activeMenuLayout = menuView
-        windowManager.addView(activeMenuLayout, layoutParamsA)
+        try {
+            windowManager.removeView(activeMenuLayout)
+            activeMenuLayout = menuView
+            windowManager.addView(activeMenuLayout, layoutParamsA)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun collapseMenu() {
         if (!isExpanded) return
         isExpanded = false
 
-        windowManager.removeView(activeMenuLayout)
-        activeMenuLayout = bubbleView
-        windowManager.addView(activeMenuLayout, layoutParamsA)
+        try {
+            windowManager.removeView(activeMenuLayout)
+            activeMenuLayout = bubbleView
+            windowManager.addView(activeMenuLayout, layoutParamsA)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
-    /**
-     * Implements smooth dragging using event.rawX and event.rawY.
-     * Prevents drag jitter and cleanly isolates taps from drags.
-     */
     private fun setupDraggableTouchListener(targetView: View, isMenuRoot: Boolean) {
         targetView.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
@@ -308,7 +326,7 @@ class FloatingMenuService : Service() {
                         touchStartX = event.rawX
                         touchStartY = event.rawY
                         isDragging = false
-                        return false // Allow child click events if not dragged
+                        return false
                     }
 
                     MotionEvent.ACTION_MOVE -> {
@@ -331,9 +349,8 @@ class FloatingMenuService : Service() {
 
                     MotionEvent.ACTION_UP -> {
                         if (isDragging) {
-                            return true // Consumed drag event
+                            return true
                         } else if (!isMenuRoot) {
-                            // Tap on bubble
                             expandMenu()
                             return true
                         }
@@ -345,126 +362,183 @@ class FloatingMenuService : Service() {
     }
 
     /**
-     * Single-shot screen capture and solver pipeline:
-     * 1. Acquire exactly ONE frame from MediaProjection via ImageReader.
-     * 2. Immediately close image and tear down capture surfaces (Zero Idle CPU).
-     * 3. Detect grid and group RGB center-pixels into region IDs.
-     * 4. Solve Star Battle CSP.
-     * 5. Animate target solution reticles on View B.
+     * Crash-Proof Single-Shot Screen Capture & Solver.
      */
     private fun executeSolveAction() {
-        val proj = mediaProjection
+        isSolving = true
+        var proj = mediaProjection
         if (proj == null) {
-            Toast.makeText(this, "Media projection not ready. Re-launch mod from app.", Toast.LENGTH_SHORT).show()
+            proj = initOrRenewMediaProjection()
+        }
+
+        if (proj == null) {
+            isSolving = false
+            Toast.makeText(this, "Screen capture permission expired. Tap 'Launch Game & Menu' in app.", Toast.LENGTH_LONG).show()
+            updateMenuStatus("RELAUNCH APP", "#FF5252")
             return
         }
 
         updateMenuStatus("CAPTURING...", "#FFB300")
         queryScreenMetrics()
 
-        // Temporarily hide View A so it does not occlude the puzzle board in the screenshot
-        activeMenuLayout?.visibility = View.INVISIBLE
+        // Temporarily hide View A so it doesn't obstruct screenshot
+        activeMenuLayout?.alpha = 0f
 
-        val imageReader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
         var virtualDisplay: VirtualDisplay? = null
 
-        imageReader.setOnImageAvailableListener(object : ImageReader.OnImageAvailableListener {
-            private var processed = false
+        try {
+            val imageReader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
+            val handler = captureHandler ?: Handler(Looper.getMainLooper())
 
-            override fun onImageAvailable(reader: ImageReader) {
-                if (processed) return
-                val image = reader.acquireLatestImage() ?: return
-                processed = true
+            imageReader.setOnImageAvailableListener(object : ImageReader.OnImageAvailableListener {
+                private var handled = false
 
-                // Restore View A visibility immediately
-                mainHandler.post {
-                    activeMenuLayout?.visibility = View.VISIBLE
-                    updateMenuStatus("ANALYZING...", "#00E5FF")
-                }
+                override fun onImageAvailable(reader: ImageReader) {
+                    if (handled) return
+                    handled = true
 
-                backgroundExecutor.execute {
-                    try {
-                        val plane = image.planes[0]
-                        val buffer = plane.buffer
-                        val pixelStride = plane.pixelStride
-                        val rowStride = plane.rowStride
-                        val rowPadding = rowStride - pixelStride * screenWidth
+                    mainHandler.post {
+                        activeMenuLayout?.alpha = 1.0f
+                        updateMenuStatus("ANALYZING...", "#00E5FF")
+                    }
 
-                        val rawBitmap = Bitmap.createBitmap(
-                            screenWidth + rowPadding / pixelStride,
-                            screenHeight,
-                            Bitmap.Config.ARGB_8888
-                        )
-                        rawBitmap.copyPixelsFromBuffer(buffer)
+                    val image = reader.acquireLatestImage()
+                    if (image == null) {
+                        isSolving = false
+                        mainHandler.post { updateMenuStatus("IMAGE EMPTY", "#FF5252") }
+                        return
+                    }
 
-                        // 100% required: close image immediately to release native graphic buffer
-                        image.close()
+                    backgroundExecutor.execute {
+                        try {
+                            val bitmap = extractBitmapSafely(image, screenWidth, screenHeight)
+                            image.close() // Immediately close image to prevent memory leak
 
-                        // Release virtual display & reader right away (Zero Idle CPU)
-                        virtualDisplay?.release()
-                        imageReader.close()
+                            try {
+                                virtualDisplay?.release()
+                                imageReader.close()
+                            } catch (_: Exception) {}
 
-                        val screenBitmap = if (rowPadding == 0) {
-                            rawBitmap
-                        } else {
-                            val cropped = Bitmap.createBitmap(rawBitmap, 0, 0, screenWidth, screenHeight)
-                            rawBitmap.recycle()
-                            cropped
-                        }
-
-                        processFrameAndSolve(screenBitmap)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        mainHandler.post {
-                            updateMenuStatus("ERROR", "#FF5252")
+                            if (bitmap != null) {
+                                processFrameAndSolve(bitmap)
+                            } else {
+                                mainHandler.post {
+                                    isSolving = false
+                                    updateMenuStatus("CAPTURE FAILED", "#FF5252")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            mainHandler.post {
+                                isSolving = false
+                                updateMenuStatus("PARSE ERROR", "#FF5252")
+                            }
                         }
                     }
                 }
-            }
-        }, captureHandler)
+            }, handler)
 
-        virtualDisplay = proj.createVirtualDisplay(
-            "StarBattleCapture",
-            screenWidth,
-            screenHeight,
-            screenDensityDpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            imageReader.surface,
-            null,
-            captureHandler
-        )
+            virtualDisplay = proj.createVirtualDisplay(
+                "StarBattleCapture",
+                screenWidth,
+                screenHeight,
+                screenDensityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                imageReader.surface,
+                null,
+                handler
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            activeMenuLayout?.alpha = 1.0f
+            isSolving = false
+            updateMenuStatus("CAPTURE ERROR", "#FF5252")
+            Toast.makeText(this, "Capture error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * Safely reads pixel data from android.media.Image without throwing BufferUnderflowException.
+     */
+    private fun extractBitmapSafely(image: android.media.Image, width: Int, height: Int): Bitmap? {
+        return try {
+            val plane = image.planes[0]
+            val buffer: ByteBuffer = plane.buffer
+            val pixelStride = plane.pixelStride
+            val rowStride = plane.rowStride
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val pixels = IntArray(width * height)
+
+            val rowData = ByteArray(rowStride)
+            for (row in 0 until height) {
+                val bytesToRead = if (row == height - 1) {
+                    buffer.remaining().coerceAtMost(rowStride)
+                } else {
+                    rowStride
+                }
+                buffer.get(rowData, 0, bytesToRead)
+
+                val offset = row * width
+                for (col in 0 until width) {
+                    val pixelIndex = col * pixelStride
+                    if (pixelIndex + 3 < bytesToRead) {
+                        val r = rowData[pixelIndex].toInt() and 0xFF
+                        val g = rowData[pixelIndex + 1].toInt() and 0xFF
+                        val b = rowData[pixelIndex + 2].toInt() and 0xFF
+                        val a = rowData[pixelIndex + 3].toInt() and 0xFF
+                        pixels[offset + col] = (a shl 24) or (r shl 16) or (g shl 8) or b
+                    }
+                }
+            }
+
+            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+            bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun processFrameAndSolve(bitmap: Bitmap) {
-        val detection = GridDetector.detectAndParse(bitmap)
-        bitmap.recycle() // Release screenshot memory
+        try {
+            val detection = GridDetector.detectAndParse(bitmap)
+            bitmap.recycle()
 
-        if (detection == null) {
-            mainHandler.post {
-                updateMenuStatus("BOARD NOT FOUND", "#FF5252")
-                Toast.makeText(this, "Could not detect puzzle board. Open game first.", Toast.LENGTH_SHORT).show()
-            }
-            return
-        }
-
-        // Pass extracted matrix to pure CSP solver
-        val solution = StarBattleSolver.solve(detection.n, detection.regionMatrix)
-
-        mainHandler.post {
-            if (solution != null && solution.isNotEmpty()) {
-                val targetPoints = solution.map { (r, c) ->
-                    PointF(
-                        detection.boardBounds.left + (c + 0.5f) * detection.cellWidth,
-                        detection.boardBounds.top + (r + 0.5f) * detection.cellHeight
-                    )
+            if (detection == null) {
+                mainHandler.post {
+                    isSolving = false
+                    updateMenuStatus("BOARD NOT FOUND", "#FF5252")
+                    Toast.makeText(this, "Could not locate puzzle grid. Ensure board is visible.", Toast.LENGTH_SHORT).show()
                 }
+                return
+            }
 
-                overlayCanvasView?.setTargetCoordinates(targetPoints, detection.boardBounds)
-                updateMenuStatus("SOLVED! (${detection.n}x${detection.n})", "#00FF88")
-                collapseMenu()
-            } else {
-                updateMenuStatus("NO SOLUTION", "#FF5252")
-                Toast.makeText(this, "Solver could not find solution for detected regions", Toast.LENGTH_SHORT).show()
+            val solution = StarBattleSolver.solve(detection.n, detection.regionMatrix)
+
+            mainHandler.post {
+                isSolving = false
+                if (solution != null && solution.isNotEmpty()) {
+                    val targetPoints = solution.map { (r, c) ->
+                        PointF(
+                            detection.boardBounds.left + (c + 0.5f) * detection.cellWidth,
+                            detection.boardBounds.top + (r + 0.5f) * detection.cellHeight
+                        )
+                    }
+
+                    overlayCanvasView?.setTargetCoordinates(targetPoints, detection.boardBounds)
+                    updateMenuStatus("SOLVED! (${detection.n} Queens)", "#00FF88")
+                    collapseMenu()
+                } else {
+                    updateMenuStatus("NO SOLUTION", "#FF5252")
+                    Toast.makeText(this, "Solver could not find valid solution for detected regions", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            mainHandler.post {
+                isSolving = false
+                updateMenuStatus("SOLVER ERROR", "#FF5252")
             }
         }
     }
@@ -475,8 +549,8 @@ class FloatingMenuService : Service() {
         val dot = menu.findViewById<View>(R.id.status_dot)
 
         tvStatus?.text = text
-        tvStatus?.setTextColor(android.graphics.Color.parseColor(hexColor))
-        dot?.setBackgroundColor(android.graphics.Color.parseColor(hexColor))
+        tvStatus?.setTextColor(Color.parseColor(hexColor))
+        dot?.setBackgroundColor(Color.parseColor(hexColor))
     }
 
     override fun onDestroy() {

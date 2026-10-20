@@ -12,3 +12,5 @@ captures/
 *.apk
 *.aab
 *.hprof
+web/node_modules/
+web/dist/

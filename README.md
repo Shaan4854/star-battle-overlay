@@ -1,12 +1,31 @@
-# Star Battle Floating Overlay & Solver
+# Star Battle & LinkedIn Queens Auto-Solver
 
-An elite, hyper-lightweight, **zero-idle-CPU** Android utility that solves $N \times N$ Star Battle (LinkedIn Queens) puzzles using a floating GameGuardian-style HUD mod menu and a transparent, touch-passthrough screen overlay.
+An elite, hyper-lightweight puzzle solver available as both a **modern Web Application** (React, TypeScript, Tailwind, Canvas CV) and an **Android floating GameGuardian-style HUD overlay**.
 
-Built with **100% native Android APIs** — zero OpenCV, zero external ML dependencies.
+Built to effortlessly solve **LinkedIn Queens** and $N \times N$ Star Battle games with **automatic color & grid detection** — no tedious manual cell coloring required!
 
 ---
 
-## ⚡ Core Architecture
+## 🌐 Web App: AI Auto Color & Grid Detector
+
+A web application inspired by `linkedin-queens-game-solver.adriangohjw.com`, upgraded with **automatic computer vision**:
+
+- **📸 Instant Clipboard Paste (`Ctrl + V`)**: Copy any screenshot from LinkedIn Queens and press Ctrl+V to automatically detect the board size and extract every color region.
+- **📁 Drag & Drop / Mobile Upload**: Upload screenshots from desktop, tablet, or phone camera.
+- **🎨 Interactive Starting Layout**: Dual-mode painting tools (Brush & Flood-Fill Bucket) to tweak colors with a real-time cell counter.
+- **👑 Solved Layout**: Instant CSP solver with interactive Gold Crown reticles and conflict inspector.
+- **⚡ 100% Client-Side**: Zero server lag, runs entirely in the browser using HTML5 Canvas pixel analysis.
+
+### Running the Web App Locally:
+```bash
+cd web
+bun install # or npm install
+bun run dev # or npm run dev
+```
+
+---
+
+## 📱 Android App: Floating HUD & Overlay
 
 ```
                                     +------------------------------+

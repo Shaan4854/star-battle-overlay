@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased bg-[#0A0D14] text-slate-100;
+  }
+}
+
+/* Custom Glassmorphism styles */
+.glass-panel {
+  background: rgba(18, 22, 36, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(26, 31, 50, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.25);
+}
+
+.glow-gold {
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.35);
+}

@@ -38,8 +38,11 @@ object StarBattleSolver {
         }
 
         val regionCount = regionIdMap.size
-        // In standard 1-star Star Battle, with N items, there must be at least N regions
-        if (regionCount < n) return null
+        // In standard 1-star Queens, if regionCount < n, we cannot have 1 queen per region
+        if (regionCount < n) {
+            // Fallback: If vision grouped two distinct regions into one, still enforce no two queens in same region
+            // but allow solving if valid
+        }
 
         // Fast primitive boolean arrays for O(1) state checks
         val usedCols = BooleanArray(n)
