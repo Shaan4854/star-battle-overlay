@@ -1,129 +1,73 @@
-# Star Battle & LinkedIn Queens Auto-Solver
+# Star Battle & LinkedIn Queens Android Solver
 
-An elite, hyper-lightweight puzzle solver available as both a **modern Web Application** (React, TypeScript, Tailwind, Canvas CV) and an **Android floating GameGuardian-style HUD overlay**.
+An elite, hyper-lightweight native **Android App** that effortlessly solves **LinkedIn Queens** and $N \times N$ Star Battle puzzles with **automatic screenshot color & grid detection**.
 
-Built to effortlessly solve **LinkedIn Queens** and $N \times N$ Star Battle games with **automatic color & grid detection** — no tedious manual cell coloring required!
+📦 **[Download Latest Signed Release APK (v1.2.0)](https://github.com/Shaan4854/star-battle-overlay/releases/download/v1.2.0/star-battle-overlay-v1.2.0-release.apk)**
 
 ---
 
-## 🌐 Web App: AI Auto Color & Grid Detector
+## 📱 Native Android App Features
 
-A web application inspired by `linkedin-queens-game-solver.adriangohjw.com`, upgraded with **automatic computer vision**:
+### 1. 📁 Screenshot Auto-Detection
+- Tap **📁 Pick Screenshot** and select any screenshot taken from LinkedIn Queens (desktop or mobile).
+- The built-in native computer vision engine automatically:
+  - Locates the square board boundaries.
+  - Detects the grid size $N$ (e.g. 7x7, 8x8, 9x9, 10x10, etc.).
+  - Samples cell median RGB values and clusters them into distinct color regions.
+  - Automatically loads and solves the puzzle without any manual painting!
 
-- **📸 Instant Clipboard Paste (`Ctrl + V`)**: Copy any screenshot from LinkedIn Queens and press Ctrl+V to automatically detect the board size and extract every color region.
-- **📁 Drag & Drop / Mobile Upload**: Upload screenshots from desktop, tablet, or phone camera.
-- **🎨 Interactive Starting Layout**: Dual-mode painting tools (Brush & Flood-Fill Bucket) to tweak colors with a real-time cell counter.
-- **👑 Solved Layout**: Instant CSP solver with interactive Gold Crown reticles and conflict inspector.
-- **⚡ 100% Client-Side**: Zero server lag, runs entirely in the browser using HTML5 Canvas pixel analysis.
+### 2. 🎨 Interactive Starting Layout
+- Custom hardware-accelerated `InteractiveGridView` with authentic LinkedIn Queens thick borders between different regions.
+- Tap or drag across cells to paint and tweak colors if desired.
+- Color palette with live color swatches and active indicator.
 
-### Running the Web App Locally:
+### 3. 👑 Solved Layout with Gold Crowns
+- Instant recursive backtracking CSP solver with $O(1)$ adjacency verification.
+- Displays the solved board with glowing gold crown badges (👑) placed on the exact coordinates.
+
+### 4. ⚡ Presets & Size Selector
+- Switch grid dimensions from 4x4 up to 12x12 with 1 tap.
+- Preloaded with authentic LinkedIn Queens layouts (Presets 1 to 5) and Clear button.
+
+### 5. 🚀 Floating GameGuardian HUD (Optional In-Game Overlay)
+- Transparent touch pass-through overlay (`OverlayCanvasView`) that draws glowing animated target reticles right on top of your LinkedIn game.
+- Zero idle CPU: screen capture surfaces are created on-demand for exactly one frame and immediately released.
+- Crash-proof: Full Android 14 `MediaProjection.Callback` lifecycle integration and safe graphic buffer streaming.
+
+---
+
+## 🛠️ Building & Installing
+
+### Download Pre-built APK:
+Grab the signed release APK directly from the GitHub release:
+👉 **[star-battle-overlay-v1.2.0-release.apk](https://github.com/Shaan4854/star-battle-overlay/releases/download/v1.2.0/star-battle-overlay-v1.2.0-release.apk)**
+
+### Install via ADB:
+```bash
+adb install -r app/build/outputs/apk/release/star-battle-overlay-v1.2.0-release.apk
+```
+
+### Build from Source:
+```bash
+./gradlew assembleRelease
+```
+The output APK is generated at:
+```
+app/build/outputs/apk/release/app-release.apk
+```
+
+---
+
+## 🌐 Web Companion (Optional)
+
+A lightweight web version is also included in `/web`:
 ```bash
 cd web
-bun install # or npm install
-bun run dev # or npm run dev
+bun install
+bun run dev
 ```
 
 ---
 
-## 📱 Android App: Floating HUD & Overlay
-
-```
-                                    +------------------------------+
-                                    |       MainActivity           |
-                                    |  • Overlay Permission Check  |
-                                    |  • MediaProjection Consent   |
-                                    +--------------+---------------+
-                                                   |
-                                                   v Starts ForegroundService
-                                    +------------------------------+
-                                    |     FloatingMenuService      |
-                                    +-------+--------------+-------+
-                                            |              |
-                      TYPE_APPLICATION_OVERLAY             TYPE_APPLICATION_OVERLAY
-                      FLAG_NOT_FOCUSABLE                   FLAG_NOT_TOUCHABLE | FLAG_NOT_FOCUSABLE
-                                            |              |
-                                            v              v
-               +--------------------------------+      +---------------------------------+
-               |             View A             |      |             View B              |
-               |      (Floating Mod Menu)       |      |       (OverlayCanvasView)       |
-               |  • Collapsed Glass Bubble      |      |  • 100% Touch Pass-Through      |
-               |  • Drag with rawX / rawY       |      |  • Animated Neon Target Reticles|
-               |  • Expanded Cyberpunk Menu     |      |  • Zero Idle CPU when cleared   |
-               +----------------+---------------+      +---------------------------------+
-                                |
-                                | User taps "SOLVE PUZZLE"
-                                v
-               +------------------------------------------------+
-               | 1. ImageReader.acquireLatestImage() (1 frame)   |
-               | 2. Immediate image.close() & VirtualDisplay cut|
-               | 3. GridDetector: Board bounds & RGB clustering |
-               | 4. StarBattleSolver: Recursive backtracking CSP|
-               | 5. Animate target dots on View B               |
-               +------------------------------------------------+
-```
-
----
-
-## Features
-
-### 1. Pure Recursive Backtracking CSP Solver (`StarBattleSolver.kt`)
-- Solves arbitrary $N \times N$ Star Battle / Queens puzzles in milliseconds.
-- Uses fast primitive `BooleanArray` buffers (`usedCols`, `usedRegions`).
-- $O(1)$ adjacency verification ensures placed items never touch orthogonally or diagonally.
-
-### 2. GameGuardian-Style Glassmorphism HUD (`layout_floating_bubble.xml` & `layout_floating_menu.xml`)
-- Translucent dark glass aesthetics (`#B3000000` / `#CC101526`) with 24dp rounded corners.
-- Smooth dragging across the screen via `event.rawX` and `event.rawY` touch handlers with drag vs. tap disambiguation.
-- Compact floating bubble collapses and expands smoothly on user tap.
-
-### 3. Touch Pass-Through Overlay Canvas (`OverlayCanvasView.kt`)
-- User touches pass **completely through** the target overlay to the underlying game.
-- Renders glowing emerald reticles (`#00FF88`) with smooth radial aura waves.
-- **Zero Idle CPU**: When no targets are displayed, all animations are halted completely.
-
-### 4. Zero-Idle-CPU Screen Capture Pipeline (`FloatingMenuService.kt` & `GridDetector.kt`)
-- `VirtualDisplay` and `ImageReader` are created on-demand for **exactly one frame** when the "Solve" button is tapped.
-- The `Image` is immediately closed (`image.close()`) and capture surfaces are disposed to eliminate memory leaks and battery drain.
-- Pure Android native vision detects board edges and clusters cell colors into region IDs.
-
----
-
-## Building & Installing
-
-### Requirements
-- Android SDK 34 (Android 14)
-- Java 17+
-- Kotlin 1.9.24+
-
-### Build Debug APK
-```bash
-./gradlew assembleDebug
-```
-The resulting APK will be located at:
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
-
-### Run Unit Tests
-```bash
-./gradlew test
-```
-
-### Install via ADB
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
-
----
-
-## Usage Guide
-
-1. **Launch the App**: Open **Star Battle Mod** and grant **Overlay Permission** (`Display over other apps`).
-2. **Launch Game & Menu**: Tap **🚀 Launch Game & Menu**, approve the screen capture prompt, and the app will start the floating service and launch your target game (e.g. LinkedIn).
-3. **Solve In-Game**: Tap the floating bubble to expand the HUD, then tap **⚡ SOLVE PUZZLE**. Animated glowing green reticles will instantly highlight every target cell without blocking your touches.
-4. **Clear or Close**: Tap **CLEAR TARGETS** to dismiss the reticles or **CLOSE MENU** to terminate the foreground service.
-
----
-
-## License
+## 📄 License
 MIT
