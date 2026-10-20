@@ -9,192 +9,281 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="32dp">
 
-        <!-- Header Hero Section -->
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:id="@+id/iv_app_logo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_glass_bubble"
+                android:padding="8dp"
+                android:src="@drawable/ic_star_logo"
+                android:contentDescription="@string/app_name" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/iv_app_logo"
+                android:layout_toStartOf="@id/btn_help_rules"
+                android:layout_marginStart="12dp"
+                android:layout_centerVertical="true"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Queens Solver"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Auto Color &amp; Grid AI Solver"
+                    android:textColor="@color/neon_green"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_help_rules"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_button_clear"
+                android:text="Rules"
+                android:textColor="@color/neon_cyan"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
+        </RelativeLayout>
+
+        <!-- Auto-Detect Card (Screenshot / Screen Capture) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_menu"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✨ Auto-Detect from Screenshot"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_pick_screenshot"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_clear"
+                    android:text="📁 Pick Screenshot"
+                    android:textColor="@color/neon_cyan"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp" />
+
+                <Button
+                    android:id="@+id/btn_scan_screen"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_clear"
+                    android:text="📸 Scan Live Screen"
+                    android:textColor="@color/neon_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="6dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_detect_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ready • Select preset, pick screenshot, or tap cells to paint"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+        </LinearLayout>
+
+        <!-- Controls: Size Selector -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="28dp">
-
-            <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_star_logo"
-                android:background="@drawable/bg_glass_bubble"
-                android:padding="10dp"
-                android:contentDescription="@string/app_name" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hero_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.02" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hero_subtitle"
-                    android:textColor="@color/neon_green"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Permission Card 1: Overlay Permission -->
-        <LinearLayout
-            android:id="@+id/card_overlay_perm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_glass_menu"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/perm_overlay_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_overlay_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="NOT GRANTED"
-                    android:textColor="@color/accent_red"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/perm_overlay_desc"
+                android:text="Size:"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/layout_size_buttons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- Controls: Presets -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Presets:"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="12dp" />
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/layout_preset_buttons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- Tab Selector: Starting Layout vs Solved Layout -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_glass_bubble"
+            android:orientation="horizontal"
+            android:padding="2dp"
+            android:layout_marginBottom="10dp">
 
             <Button
-                android:id="@+id/btn_grant_overlay"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:background="@drawable/bg_button_clear"
-                android:text="@string/btn_grant_overlay"
-                android:textColor="@color/neon_cyan"
+                android:id="@+id/tab_starting"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button_solve"
+                android:text="Starting Layout"
+                android:textColor="#0A0D14"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/tab_solved"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:text="👑 Solved Layout"
+                android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Permission Card 2: Media Projection -->
-        <LinearLayout
+        <!-- Interactive Grid Board -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_glass_menu"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="24dp">
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="12dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+            <com.starbattle.overlay.InteractiveGridView
+                android:id="@+id/interactive_grid_view"
+                android:layout_width="320dp"
+                android:layout_height="320dp"
+                android:layout_gravity="center" />
+        </FrameLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/perm_projection_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_projection_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="CONSENT ON LAUNCH"
-                    android:textColor="@color/neon_green"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/perm_projection_desc"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginTop="6dp" />
-        </LinearLayout>
-
-        <!-- Target Game Configuration -->
+        <!-- Color Palette for Painting -->
         <TextView
+            android:id="@+id/tv_palette_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/label_target_package"
-            android:textColor="@color/text_primary"
-            android:textSize="13sp"
-            android:textStyle="bold"
+            android:text="Color Palette (tap to select active brush color):"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
             android:layout_marginBottom="6dp" />
 
-        <EditText
-            android:id="@+id/et_target_package"
+        <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:background="@drawable/bg_glass_bubble"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_muted"
-            android:text="com.linkedin.android"
-            android:hint="@string/hint_target_package"
-            android:inputType="textUri"
-            android:textSize="13sp"
-            android:layout_marginBottom="24dp" />
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="16dp">
 
-        <!-- Primary Launch Action -->
+            <LinearLayout
+                android:id="@+id/layout_palette_swatches"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Primary Solve Action Button -->
         <Button
-            android:id="@+id/btn_launch_game_and_menu"
+            android:id="@+id/btn_solve_main"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="50dp"
             android:background="@drawable/bg_button_solve"
-            android:text="@string/btn_launch_mod"
+            android:text="⚡ SOLVE PUZZLE"
             android:textColor="#0A0D14"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:letterSpacing="0.03"
+            android:letterSpacing="0.04"
             android:stateListAnimator="@null"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="12dp" />
 
-        <!-- Status / Architecture Info Note -->
-        <TextView
+        <!-- Floating HUD Overlay Launcher -->
+        <Button
+            android:id="@+id/btn_launch_floating_hud"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="⚡ Zero-Idle-CPU Architecture:\n• Pure native recursive backtracking CSP solver.\n• Screen projection surface runs on-demand for exactly 1 frame.\n• 100% touch-passthrough overlay directly to your game."
-            android:textColor="@color/text_muted"
-            android:textSize="11sp"
-            android:lineSpacingExtra="4dp"
-            android:padding="8dp" />
+            android:layout_height="44dp"
+            android:background="@drawable/bg_button_clear"
+            android:text="🚀 Enable Floating GameGuardian HUD"
+            android:textColor="@color/neon_green"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:stateListAnimator="@null" />
 
     </LinearLayout>
 </ScrollView>
