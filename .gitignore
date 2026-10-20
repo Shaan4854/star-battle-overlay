@@ -1,0 +1,1 @@
+*.iml\n.gradle\n.kotlin\nlocal.properties\n.idea\n.DS_Store\nbuild\ncaptures\nexternalNativeBuild\ncxx\n*.apk\n*.aab\n*.hprof\n
