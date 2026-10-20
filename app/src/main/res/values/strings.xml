@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Star Battle Mod</string>
+    <string name="overlay_service_title">Star Battle Floating Mod Active</string>
+    <string name="overlay_service_desc">Zero-idle-CPU screen overlay ready to solve</string>
+    
+    <!-- Floating Menu UI -->
+    <string name="menu_title">STAR BATTLE</string>
+    <string name="menu_badge">MOD PRO</string>
+    <string name="btn_solve">⚡ SOLVE PUZZLE</string>
+    <string name="btn_clear">CLEAR TARGETS</string>
+    <string name="btn_close">CLOSE MENU</string>
+    <string name="status_ready">STATUS: READY</string>
+    <string name="status_scanning">ANALYZING GRID...</string>
+    <string name="status_solved">PUZZLE SOLVED!</string>
+    <string name="status_failed">FAILED TO DETECT/SOLVE</string>
+
+    <!-- MainActivity UI -->
+    <string name="hero_title">Star Battle Solver</string>
+    <string name="hero_subtitle">Zero-Idle-CPU • Glassmorphism HUD Overlay</string>
+    <string name="perm_overlay_title">Overlay Permission</string>
+    <string name="perm_overlay_desc">Allows floating mod menu and solution target dots</string>
+    <string name="perm_projection_title">Screen Capture Consent</string>
+    <string name="perm_projection_desc">Required to parse puzzle regions on-demand</string>
+    <string name="btn_grant_overlay">Grant Overlay Permission</string>
+    <string name="btn_launch_mod">🚀 Launch Game &amp; Menu</string>
+    <string name="label_target_package">Target Game Package:</string>
+    <string name="hint_target_package">e.g., com.linkedin.android or com.example.game</string>
+</resources>

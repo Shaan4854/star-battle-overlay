@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cyberpunk / GameGuardian Glassmorphism Palette -->
+    <color name="glass_dark_bg">#B30A0D14</color>
+    <color name="glass_card_bg">#D9111625</color>
+    <color name="glass_bubble_bg">#CC0D111E</color>
+    <color name="glass_border">#33FFFFFF</color>
+    <color name="glass_border_glow">#6600FF88</color>
+    
+    <!-- Neon Accents -->
+    <color name="neon_green">#00FF88</color>
+    <color name="neon_green_bright">#00E676</color>
+    <color name="neon_cyan">#00E5FF</color>
+    <color name="neon_emerald">#10B981</color>
+    <color name="accent_blue">#3B82F6</color>
+    <color name="accent_red">#FF5252</color>
+    <color name="accent_red_dark">#2A1215</color>
+    
+    <!-- Neutral Tones -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    <color name="divider_color">#20FFFFFF</color>
+    
+    <!-- Status Colors -->
+    <color name="status_ready">#00FF88</color>
+    <color name="status_busy">#FFB300</color>
+    <color name="status_error">#FF5252</color>
+</resources>

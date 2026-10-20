@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bubble_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="6dp">
+
+    <!-- Glassmorphism Floating Pill/Bubble -->
+    <RelativeLayout
+        android:id="@+id/bubble_container"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:background="@drawable/bg_glass_bubble"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/iv_bubble_icon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_centerInParent="true"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_star_logo" />
+
+        <!-- Tiny active indicator dot -->
+        <View
+            android:id="@+id/view_bubble_badge"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_status_badge" />
+
+    </RelativeLayout>
+
+</FrameLayout>

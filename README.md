@@ -1,82 +1,110 @@
-# Star Battle Overlay
+# Star Battle Floating Overlay & Solver
 
-An Android overlay app that reads **one** screen frame, solves the Star Battle puzzle visible on it and draws the solution on top of the game.
+An elite, hyper-lightweight, **zero-idle-CPU** Android utility that solves $N \times N$ Star Battle (LinkedIn Queens) puzzles using a floating GameGuardian-style HUD mod menu and a transparent, touch-passthrough screen overlay.
 
-The app takes a single screenshot through `MediaProjection`, detects the puzzle board, works out the grid size and the coloured regions, solves the puzzle exactly and paints a ring on every star position with a transparent overlay window on top of the game.
+Built with **100% native Android APIs** — zero OpenCV, zero external ML dependencies.
 
-<p align="center">
-  <img src="artifacts/synthetic-puzzle.png" alt="Synthetic Star Battle board used to test the detector" width="420">
-</p>
+---
 
-## How it works
+## ⚡ Core Architecture
 
-| Stage | What happens | Where |
-|---|---|---|
-| Capture | `MediaProjection` + a single `ImageReader`/`VirtualDisplay` pair grab **exactly one** frame, which is then copied into a software `Bitmap` and the projection is released immediately. | `CaptureService.kt` |
-| Detect | The frame is downscaled, the background colour is estimated with a 5-bit histogram, and the largest connected blob is flood-filled to find the board. | `PuzzleAnalyzer` in `CaptureService.kt` |
-| Grid size | Column/row edge profiles are built, the cell pitch is recovered by normalised autocorrelation and cross-checked against boundary coverage; the candidate that yields exactly N regions **and** a solvable board wins. | `PuzzleAnalyzer` |
-| Regions | Each cell is sampled with a patch median, and sampled colours are merged with a Manhattan-distance tolerance into region ids. | `PuzzleAnalyzer` |
-| Solve | A recursive backtracking CSP places one star per row, per column and per region, with a no-touching rule and two forward checks that prune dead branches. | `StarBattleSolver.kt` |
-| Draw | A `WindowManager` overlay view paints a ring on every solved cell. | `OverlayCanvasView.kt` |
-
-## Requirements
-
-* Android 8.0 (API 26) or newer
-* `compileSdk` / `targetSdk` 34, Java 17, Kotlin 1.9.24, Gradle 8.7 (wrapper included)
-
-## Build
-
-```bash
-export JAVA_HOME=/path/to/jdk-17
-./gradlew :app:assembleDebug          # -> app/build/outputs/apk/debug/app-debug.apk
+```
+                                    +------------------------------+
+                                    |       MainActivity           |
+                                    |  • Overlay Permission Check  |
+                                    |  • MediaProjection Consent   |
+                                    +--------------+---------------+
+                                                   |
+                                                   v Starts ForegroundService
+                                    +------------------------------+
+                                    |     FloatingMenuService      |
+                                    +-------+--------------+-------+
+                                            |              |
+                      TYPE_APPLICATION_OVERLAY             TYPE_APPLICATION_OVERLAY
+                      FLAG_NOT_FOCUSABLE                   FLAG_NOT_TOUCHABLE | FLAG_NOT_FOCUSABLE
+                                            |              |
+                                            v              v
+               +--------------------------------+      +---------------------------------+
+               |             View A             |      |             View B              |
+               |      (Floating Mod Menu)       |      |       (OverlayCanvasView)       |
+               |  • Collapsed Glass Bubble      |      |  • 100% Touch Pass-Through      |
+               |  • Drag with rawX / rawY       |      |  • Animated Neon Target Reticles|
+               |  • Expanded Cyberpunk Menu     |      |  • Zero Idle CPU when cleared   |
+               +----------------+---------------+      +---------------------------------+
+                                |
+                                | User taps "SOLVE PUZZLE"
+                                v
+               +------------------------------------------------+
+               | 1. ImageReader.acquireLatestImage() (1 frame)   |
+               | 2. Immediate image.close() & VirtualDisplay cut|
+               | 3. GridDetector: Board bounds & RGB clustering |
+               | 4. StarBattleSolver: Recursive backtracking CSP|
+               | 5. Animate target dots on View B               |
+               +------------------------------------------------+
 ```
 
-The build needs an Android SDK with platform 34 and build-tools 34; point `ANDROID_HOME` at it and create `local.properties` with `sdk.dir=/path/to/android-sdk` if the SDK is not auto-detected.
+---
 
-To produce a distributable build, add a `signingConfig` to the `release` build type and run:
+## Features
 
+### 1. Pure Recursive Backtracking CSP Solver (`StarBattleSolver.kt`)
+- Solves arbitrary $N \times N$ Star Battle / Queens puzzles in milliseconds.
+- Uses fast primitive `BooleanArray` buffers (`usedCols`, `usedRegions`).
+- $O(1)$ adjacency verification ensures placed items never touch orthogonally or diagonally.
+
+### 2. GameGuardian-Style Glassmorphism HUD (`layout_floating_bubble.xml` & `layout_floating_menu.xml`)
+- Translucent dark glass aesthetics (`#B3000000` / `#CC101526`) with 24dp rounded corners.
+- Smooth dragging across the screen via `event.rawX` and `event.rawY` touch handlers with drag vs. tap disambiguation.
+- Compact floating bubble collapses and expands smoothly on user tap.
+
+### 3. Touch Pass-Through Overlay Canvas (`OverlayCanvasView.kt`)
+- User touches pass **completely through** the target overlay to the underlying game.
+- Renders glowing emerald reticles (`#00FF88`) with smooth radial aura waves.
+- **Zero Idle CPU**: When no targets are displayed, all animations are halted completely.
+
+### 4. Zero-Idle-CPU Screen Capture Pipeline (`FloatingMenuService.kt` & `GridDetector.kt`)
+- `VirtualDisplay` and `ImageReader` are created on-demand for **exactly one frame** when the "Solve" button is tapped.
+- The `Image` is immediately closed (`image.close()`) and capture surfaces are disposed to eliminate memory leaks and battery drain.
+- Pure Android native vision detects board edges and clusters cell colors into region IDs.
+
+---
+
+## Building & Installing
+
+### Requirements
+- Android SDK 34 (Android 14)
+- Java 17+
+- Kotlin 1.9.24+
+
+### Build Debug APK
 ```bash
-./gradlew :app:assembleRelease
+./gradlew assembleDebug
+```
+The resulting APK will be located at:
+```
+app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The debug APK is signed with the local debug keystore, so it is for sideloading only - it is not suitable for the Play Store.
+### Run Unit Tests
+```bash
+./gradlew test
+```
 
-## Install
-
+### Install via ADB
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-or copy the APK to the phone and allow "install unknown apps" for your file manager.
+---
 
-## Use
+## Usage Guide
 
-1. Open the app and grant the **overlay** permission (it opens the system settings page for "Display over other apps").
-2. Open the puzzle in the game and make sure the whole board is visible.
-3. Tap **Solve** in the app, accept the screen-capture consent dialog, and switch back to the game within the capture delay (2 seconds by default).
-4. The solution appears on top of the game. The notification has a **Clear overlay** action, and so does the app.
+1. **Launch the App**: Open **Star Battle Mod** and grant **Overlay Permission** (`Display over other apps`).
+2. **Launch Game & Menu**: Tap **🚀 Launch Game & Menu**, approve the screen capture prompt, and the app will start the floating service and launch your target game (e.g. LinkedIn).
+3. **Solve In-Game**: Tap the floating bubble to expand the HUD, then tap **⚡ SOLVE PUZZLE**. Animated glowing green reticles will instantly highlight every target cell without blocking your touches.
+4. **Clear or Close**: Tap **CLEAR TARGETS** to dismiss the reticles or **CLOSE MENU** to terminate the foreground service.
 
-## Project layout
+---
 
-```
-app/src/main/java/com/starbattle/overlay/
-├── MainActivity.kt              # permission flow, capture request, settings entry points
-├── CaptureService.kt            # foreground service, screen capture, board detection
-├── overlay/OverlayCanvasView.kt # transparent overlay view that draws the stars
-└── solver/StarBattleSolver.kt   # exact backtracking solver
-```
-
-## Permissions
-
-| Permission | Why |
-|---|---|
-| `SYSTEM_ALERT_WINDOW` | Draw the solution on top of the game. |
-| `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PROJECTION` | Android 14 refuses `getMediaProjection()` unless a foreground service of type `mediaProjection` is already running. |
-| `POST_NOTIFICATIONS` | The foreground-service notification has to be visible on Android 13+. |
-
-## Limitations
-
-* The detector assumes an **axis-aligned** board that draws its cell borders and uses **distinct region colours**. Boards without visible grid lines, or with two regions sharing a colour, are not detected.
-* The board must be fully visible on screen when the frame is captured, and no other large UI element may touch the board (the background/blob separation would fail).
-* Grid sizes from 2x2 to 14x14 are supported.
-* The app is **debug-signed** in this repository; create your own release signing config before distributing it.
+## License
+MIT

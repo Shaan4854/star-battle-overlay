@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.StarBattleOverlay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/neon_green</item>
+        <item name="colorPrimaryVariant">@color/neon_green_bright</item>
+        <item name="colorOnPrimary">#0A0D14</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/neon_cyan</item>
+        <item name="colorSecondaryVariant">@color/accent_blue</item>
+        <item name="colorOnSecondary">#0A0D14</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">#0A0D14</item>
+        <item name="android:navigationBarColor">#0A0D14</item>
+        <item name="android:windowBackground">#0A0D14</item>
+    </style>
+</resources>
